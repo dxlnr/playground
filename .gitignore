@@ -1,3 +1,6 @@
 enwik*
 
 cpp/cmake_tutorial/release/*
+
+python/pybind_py_cpp
+python/pybind_py_cpp/*

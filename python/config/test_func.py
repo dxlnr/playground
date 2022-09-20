@@ -31,9 +31,17 @@ class Config(object):
         """."""
         setattr(self, key, value)
 
+    # def __setitem__(self, key, value):
+    #     """."""
+    #     value = self._check_and_coerce_conf_value_type(value, self[key])
+    #     setattr(self, key, value)
+    #
     def __getitem__(self, key):
         """."""
-        return getattr(self, key)
+        try:
+            return getattr(self, key)
+        except:
+            print(f"AttributeError: {key}")
 
     def _merge_a_into_self(self, external_d, cfg, key_list: List[str]):
         """Merge a config dictionary a into self, clobbering the
@@ -91,4 +99,9 @@ class Config(object):
 
 obj = Config()
 obj.merge_cfg_from_yaml_str("config.yaml")
+print(obj)
+obj["TEST"] = 10
+obj["NAME"] = "hello."
+print(obj)
+obj.NAME = 10
 print(obj)
