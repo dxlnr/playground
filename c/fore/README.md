@@ -28,11 +28,13 @@ git submodule update --init --recursive
 ./main
 ```
 
+The built `main` file you find is built with clang and runs a `fore` loop.
+
 ## Notes
 
-The for loop keyword `kw_for` is found in `clang/lib/Parse/ParseStmt.cpp`.
-
-General Definition of the language is defined in `clang/include/clang/Basic/TokenKinds.def`
+- The for loop keyword `kw_for` is found in `clang/lib/Parse/ParseStmt.cpp`.
+- General Definition of the language is defined in `clang/include/clang/Basic/TokenKinds.def`
+- `EmitStmt(S.getInc())` within `clang/lib/CodeGen/CGStmt.cpp` actually does the job.
 
 
 ## Additionals
