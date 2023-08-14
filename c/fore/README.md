@@ -1,6 +1,6 @@
 ## Task
 
-Adding `fore` loop to clang.
+Adding a `fore` loop to clang. This is basically some non-sense functionality which helps you dive into clang a little bit.
 
 ```c
 fore (int i=0; i < 10; i++) {
@@ -24,10 +24,17 @@ git submodule update --init --recursive
 ```
 
 ```bash
-clang 
+./clang/build/bin/clang main.c -o main
+./main
 ```
 
 ## Notes
 
 The for loop keyword `kw_for` is found in `clang/lib/Parse/ParseStmt.cpp`.
+
 General Definition of the language is defined in `clang/include/clang/Basic/TokenKinds.def`
+
+
+## Additionals
+
+- Clang: [Internal Manual](https://clang.llvm.org/docs/InternalsManual.html)
