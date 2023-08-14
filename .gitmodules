@@ -2,3 +2,6 @@
 	path = python/pybind_py_cpp/ThirdParty/pybind11
 	url = https://github.com/pybind/pybind11.git
 	branch = stable
+[submodule "c/fore/clang"]
+	path = c/fore/clang
+	url = git@github.com:llvm/llvm-project
