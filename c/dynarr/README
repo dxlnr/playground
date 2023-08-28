@@ -1,0 +1,4 @@
+Inquiries on Dynamic Array in C
+
+$ gcc -Wall main.c -o dyna
+$ ./dyna
