@@ -2,3 +2,6 @@ Inquiries on Dynamic Array in C
 
 $ gcc -Wall main.c -o dyna
 $ ./dyna
+
+
+Checking for the power of 2: if ((nb & (nb - 1)) == 0)
