@@ -80,7 +80,7 @@ static void dynarray(void* ptab, int *sptr, void *data)
      * However, if you pass a pointer to a pointer (i.e., a double pointer) and modify the pointer it points to, 
      * you effectively update the original pointer outside the function. 
      * */
-    *(void***) ptab = *pp;
+    *(void***) ptab = pp;
   }
   /* Add the data to the table. */
   pp[nb++] = data;
@@ -117,6 +117,18 @@ int main()
   // Second char str.
   char *str3 = "GazingIntoTheAbyss";
   write_strs_to_table(s, str3);
+  printf("(fc) : %d.\n", s->fc);
+
+  printf("\nFourth set of char.\n");
+  // Second char str.
+  char *str4 = "Void.";
+  write_strs_to_table(s, str4);
+  printf("(fc) : %d.\n", s->fc);
+
+  printf("\nFifth set of char.\n");
+  // Second char str.
+  char *str5 = "OneLastQuestion?";
+  write_strs_to_table(s, str5);
   printf("(fc) : %d.\n", s->fc);
 
   return 0;
