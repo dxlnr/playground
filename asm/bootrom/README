@@ -1,0 +1,5 @@
+$ arm-linux-gnueabihf-as -o boot.o boot.s
+$ arm-linux-gnueabihf-ld -o boot.elf boot.o
+$ arm-linux-gnueabihf-objcopy -O binary boot.elf boot.bin
+
+$ qemu-system-arm -M vexpress-a9 -m 128M -nographic -kernel boot.bin
