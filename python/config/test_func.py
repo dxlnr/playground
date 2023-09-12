@@ -59,7 +59,12 @@ class Config(object):
                 cfg[k] = v
 
     @staticmethod
-    def _check_and_coerce_conf_value_type(replacement, original, casts: List[List[Any]] = [[(tuple, list), (list, tuple)]], valid_types: Dict = {tuple, list, dict, str, int, float, bool, type(None)}):
+    def _check_and_coerce_conf_value_type(
+        replacement,
+        original,
+        casts: List[List[Any]] = [[(tuple, list), (list, tuple)]],
+        valid_types: Dict = {tuple, list, dict, str, int, float, bool, type(None)},
+    ):
         """Checks that `replacement`, which is intended to replace `original` is of
         the right type. The type is correct if it matches exactly or is one of a few
         cases in which the type can be easily coerced.
@@ -75,7 +80,9 @@ class Config(object):
         if replacement_type == original_type:
             return replacement
 
-        if (replacement_type == type(None) and original_type in valid_types) or (original_type == type(None) and replacement_type in valid_types):
+        if (isinstance(replacement_type, None) and original_type in valid_types) or (
+            isinstance(original_type, None) and replacement_type in valid_types
+        ):
             return replacement
 
         # Cast replacement from from_type to to_type if the replacement and original
@@ -87,7 +94,7 @@ class Config(object):
                 return False, None
 
         for cast_pair in casts:
-            for (from_type, to_type) in casts:
+            for from_type, to_type in casts:
                 converted, converted_value = conditional_cast(from_type, to_type)
                 if converted:
                     return converted_value
