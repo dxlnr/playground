@@ -1,4 +1,11 @@
 Import('qt_env')
 
+base_libs = qt_env["LIBS"]
+
+widgets_src = ["views/cam.cc"]
+widgets = qt_env.Library("qt_widgets", widgets_src, LIBS=qt_env["LIBS"])
+qt_libs = [widgets] + qt_env["LIBS"]
+
 qt_src = ["main.cc", "window.cc"]
-qt_env.Program("ui", qt_src)
+# qt_env.Program("ui", qt_src)
+qt_env.Program("ui", qt_src, LIBS=qt_libs)

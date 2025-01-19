@@ -1,5 +1,71 @@
+# import os
+# import subprocess
+# import platform
+# 
+# arch = platform.system()
+# 
+# # QT Version
+# QT_VERSION = 6
+# 
+# def find_qmake(version):
+#     return "/usr/lib/qt6/bin/qmake"
+# # def find_qmake(version):
+# #     for cmd in [f"qmake{version}", "qmake-qt6", "qmake"]:
+# #         try:
+# #             return subprocess.check_output([cmd, "-query", "."], encoding="utf8").strip()
+# #         except (subprocess.CalledProcessError, FileNotFoundError):
+# #             continue
+# #     raise RuntimeError(f"qmake for Qt{version} not found.")
+# 
+# # Get Qt paths
+# def get_qt_path(query):
+#     return subprocess.check_output([qmake_path, '-query', query], encoding='utf8').strip()
+# 
+# 
+# qmake_path = find_qmake(QT_VERSION)
+# qt_install_prefix = get_qt_path('QT_INSTALL_PREFIX')
+# qt_install_headers = get_qt_path('QT_INSTALL_HEADERS')
+# qt_libexec_path = get_qt_path('QT_INSTALL_LIBEXECS')
+# qt_install_libs = get_qt_path('QT_INSTALL_LIBS')
+# 
+# # Configure environment
+# qt_env = Environment(
+#     ENV={"PATH": os.environ["PATH"]},
+#     CXXFLAGS=['-std=c++17', '-Wall'],
+#     CC='clang',
+#     CXX='clang++',
+#     LINKFLAGS=[],
+#     CFLAGS=[],
+# )
+# 
+# # Add Qt include and library paths
+# qt_env['CPPPATH'] = [qt_install_headers]
+# qt_env['LIBPATH'] = [qt_install_libs]
+# qt_env['LIBS'] = [f"Qt{QT_VERSION}{m}" for m in ["Widgets", "Gui", "Core"]]
+# 
+# # Add OpenGL based on platform
+# if arch == "Linux":
+#     qt_env['LIBS'] += ['GL']
+# elif arch == "Windows":
+#     qt_env['LIBS'] += ['opengl32']
+# 
+# # Set the moc path
+# qt_env['QT_MOC'] = f"{qt_libexec_path}/moc"
+# 
+# # Load the qt6 tool
+# qt_env.Tool('qt6')
+# 
+# Export('qt_env')
+# 
+# # Call SConscript for build rules
+# sConscript('qt/SConscript')
+
+
 import os
 import subprocess
+import platform
+
+arch = platform.system()
 
 # QT
 QT_VERSION = 6
@@ -10,17 +76,20 @@ def get_qt_path(query):
 qt_env = Environment(
     ENV={"PATH": os.environ["PATH"]},
     CXXFLAGS=['-std=c++17'],
-    CPPPATH=[],
     CC='clang',
     CXX='clang++',
     LINKFLAGS=[],
-    RPATH=[],
     CFLAGS=[],
     LIBPATH=[],
 )
+cpppath = [
+    '/usr/lib/include',
+]
+qt_env["CPPPATH"] = cpppath
 
-qt_modules = ["Widgets", "Gui", "Core"]
+qt_modules = ["Widgets", "Gui", "Core", "OpenGL", "OpenGLWidgets"]
 qt_libs = [f"Qt{QT_VERSION}{m}" for m in qt_modules]
+qt_libs += ["GL"]
 
 qt_install_headers = get_qt_path('QT_INSTALL_HEADERS')
 qt_env['QTDIR'] = get_qt_path('QT_INSTALL_PREFIX')
@@ -35,6 +104,7 @@ qt_dirs += [f"{qt_install_headers}/Qt{m}" for m in qt_modules]
 qt_env.Tool('qt6')
 qt_env['CPPPATH'] += qt_dirs
 qt_env['LIBS'] = qt_libs
+qt_env['LIBPATH'] = ['usr/lib']
 qt_env['QT_MOC'] = f"{qt_libexec_path}/moc"
 
 Export('qt_env')
