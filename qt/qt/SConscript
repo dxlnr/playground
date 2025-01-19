@@ -1,0 +1,4 @@
+Import('qt_env')
+
+qt_src = ["main.cc", "window.cc"]
+qt_env.Program("ui", qt_src)

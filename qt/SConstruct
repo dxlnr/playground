@@ -1,0 +1,43 @@
+import os
+import subprocess
+
+# QT
+QT_VERSION = 6
+
+def get_qt_path(query):
+    return subprocess.check_output([f'qmake{QT_VERSION}', '-query', f'{query}'], encoding='utf8').strip()
+
+qt_env = Environment(
+    ENV={"PATH": os.environ["PATH"]},
+    CXXFLAGS=['-std=c++17'],
+    CPPPATH=[],
+    CC='clang',
+    CXX='clang++',
+    LINKFLAGS=[],
+    RPATH=[],
+    CFLAGS=[],
+    LIBPATH=[],
+)
+
+qt_modules = ["Widgets", "Gui", "Core"]
+qt_libs = [f"Qt{QT_VERSION}{m}" for m in qt_modules]
+
+qt_install_headers = get_qt_path('QT_INSTALL_HEADERS')
+qt_env['QTDIR'] = get_qt_path('QT_INSTALL_PREFIX')
+qt_libexec_path = get_qt_path('QT_INSTALL_LIBEXECS')
+
+qt_gui_path = os.path.join(qt_install_headers, "QtGui")
+qt_gui_dirs = [d for d in os.listdir(qt_gui_path) if os.path.isdir(os.path.join(qt_gui_path, d))]
+qt_dirs = [f"{qt_install_headers}"]
+qt_dirs += [f"{qt_install_headers}/QtGui/{qt_gui_dirs[0]}/QtGui", ] if qt_gui_dirs else []
+qt_dirs += [f"{qt_install_headers}/Qt{m}" for m in qt_modules]
+
+qt_env.Tool('qt6')
+qt_env['CPPPATH'] += qt_dirs
+qt_env['LIBS'] = qt_libs
+qt_env['QT_MOC'] = f"{qt_libexec_path}/moc"
+
+Export('qt_env')
+
+# run
+SConscript(['qt/SConscript'])
