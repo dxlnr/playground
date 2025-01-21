@@ -13,8 +13,14 @@ public:
   explicit CameraWidget(std::string stream_name, QWidget* parent = nullptr);
   ~CameraWidget();
 
+  void stopvThread();
 signals:
 
 protected:
+  void showEvent(QShowEvent *event) override;
+  void vThread();
+
   std::string stream_name;
+
+  QThread *vthread = nullptr;
 };

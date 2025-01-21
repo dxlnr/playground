@@ -1,71 +1,54 @@
-# import os
-# import subprocess
-# import platform
-# 
-# arch = platform.system()
-# 
-# # QT Version
-# QT_VERSION = 6
-# 
-# def find_qmake(version):
-#     return "/usr/lib/qt6/bin/qmake"
-# # def find_qmake(version):
-# #     for cmd in [f"qmake{version}", "qmake-qt6", "qmake"]:
-# #         try:
-# #             return subprocess.check_output([cmd, "-query", "."], encoding="utf8").strip()
-# #         except (subprocess.CalledProcessError, FileNotFoundError):
-# #             continue
-# #     raise RuntimeError(f"qmake for Qt{version} not found.")
-# 
-# # Get Qt paths
-# def get_qt_path(query):
-#     return subprocess.check_output([qmake_path, '-query', query], encoding='utf8').strip()
-# 
-# 
-# qmake_path = find_qmake(QT_VERSION)
-# qt_install_prefix = get_qt_path('QT_INSTALL_PREFIX')
-# qt_install_headers = get_qt_path('QT_INSTALL_HEADERS')
-# qt_libexec_path = get_qt_path('QT_INSTALL_LIBEXECS')
-# qt_install_libs = get_qt_path('QT_INSTALL_LIBS')
-# 
-# # Configure environment
-# qt_env = Environment(
-#     ENV={"PATH": os.environ["PATH"]},
-#     CXXFLAGS=['-std=c++17', '-Wall'],
-#     CC='clang',
-#     CXX='clang++',
-#     LINKFLAGS=[],
-#     CFLAGS=[],
-# )
-# 
-# # Add Qt include and library paths
-# qt_env['CPPPATH'] = [qt_install_headers]
-# qt_env['LIBPATH'] = [qt_install_libs]
-# qt_env['LIBS'] = [f"Qt{QT_VERSION}{m}" for m in ["Widgets", "Gui", "Core"]]
-# 
-# # Add OpenGL based on platform
-# if arch == "Linux":
-#     qt_env['LIBS'] += ['GL']
-# elif arch == "Windows":
-#     qt_env['LIBS'] += ['opengl32']
-# 
-# # Set the moc path
-# qt_env['QT_MOC'] = f"{qt_libexec_path}/moc"
-# 
-# # Load the qt6 tool
-# qt_env.Tool('qt6')
-# 
-# Export('qt_env')
-# 
-# # Call SConscript for build rules
-# sConscript('qt/SConscript')
-
-
 import os
 import subprocess
 import platform
+import sysconfig
+import numpy as np
 
 arch = platform.system()
+
+# ENVIRONMENT
+env = Environment(
+  ENV={"PATH": os.environ["PATH"]},
+  CC='clang',
+  CXX='clang++',
+  tools=["default", "cython"],
+  CXXFLAGS=['-std=c++17'],
+  CPPPATH=[],
+)
+env["CCFLAGS"] = ["-g", "-fPIC", "-O2", "-Wunused", "-Werror", "-Wshadow"]
+
+# COMMUNICATION
+cpppath = [
+    "#msgq/cc",
+    "#msgq/cc/vision",
+    '/usr/include/',
+    '/usr/lib/include',
+]
+ccflags = []
+ldflags = []
+
+msgq_env = env.Clone()
+msgq_env["CCFLAGS"] = ["-g", "-fPIC", "-O2", "-Wunused", "-Werror", "-Wshadow", "-Wno-vla-extension"] + ccflags
+msgq_env["LDFLAGS"] = ldflags
+msgq_env["LINKFLAGS"] = ldflags
+msgq_env["CFLAGS"] = "-std=gnu11"
+msgq_env["CXXFLAGS"] = "-std=c++1z"
+msgq_env["CPPPATH"] = cpppath
+msgq_env["CYTHONCFILESUFFIX"] = ".cpp"
+
+# CYTHON
+python_include = sysconfig.get_path('include')
+python_lib = sysconfig.get_config_var('LIBDIR')
+python_version = sysconfig.get_config_var('VERSION')  # E.g., '3.12'
+
+envCython = msgq_env.Clone(LIBS=[])
+envCython["CPPPATH"] += [
+    python_include,
+    np.get_include(),
+]
+envCython["CCFLAGS"] += ["-Wno-#warnings", "-Wno-shadow", "-Wno-deprecated-declarations"]
+envCython["CCFLAGS"].remove('-Werror')
+envCython["LINKFLAGS"] = ["-pthread", "-shared"]
 
 # QT
 QT_VERSION = 6
@@ -107,7 +90,7 @@ qt_env['LIBS'] = qt_libs
 qt_env['LIBPATH'] = ['usr/lib']
 qt_env['QT_MOC'] = f"{qt_libexec_path}/moc"
 
-Export('qt_env')
+Export('qt_env', 'msgq_env', 'envCython')
 
 # run
-SConscript(['qt/SConscript'])
+SConscript(['msgq/SConscript', 'qt/SConscript'])
