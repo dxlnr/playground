@@ -19,6 +19,7 @@ env["CCFLAGS"] = ["-g", "-fPIC", "-O2", "-Wunused", "-Werror", "-Wshadow"]
 
 # COMMUNICATION
 cpppath = [
+    Dir('.').abspath,
     "#msgq/cc",
     "#msgq/cc/vision",
     '/usr/include/',
@@ -65,9 +66,7 @@ qt_env = Environment(
     CFLAGS=[],
     LIBPATH=[],
 )
-cpppath = [
-    '/usr/lib/include',
-]
+
 qt_env["CPPPATH"] = cpppath
 
 qt_modules = ["Widgets", "Gui", "Core", "OpenGL", "OpenGLWidgets"]

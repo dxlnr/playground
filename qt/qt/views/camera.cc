@@ -1,6 +1,6 @@
 #include <QApplication>
 
-#include "cam.h"
+#include "camera.h"
 
 
 CameraWidget::CameraWidget(std::string stream_name, QWidget* parent) :
@@ -12,7 +12,21 @@ CameraWidget::CameraWidget(std::string stream_name, QWidget* parent) :
 
 CameraWidget::~CameraWidget() {}
 
-void CameraWidget::vThread() {}
+void CameraWidget::vThread() {
+  std::unique_ptr<VisionIpcClient> vclient;
+
+  while (!QThread::currentThread()->isInterruptionRequested()) {
+    if (!vclient->connected) {
+      auto streams = VisionIpcClient::getAvailableStreams(stream_name, false);
+      if (streams.empty()) {
+        printf("empty stream");
+        QThread::msleep(100);
+        continue;
+      }
+    }
+  }
+}
+
 void CameraWidget::stopvThread() {}
 
 void CameraWidget::showEvent(QShowEvent *event) {

@@ -4,7 +4,8 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
-#include "views/cam.h"
+#include "views/camera.h"
+
 
 MainWindow::MainWindow(QWidget *parent) : QWidget(parent) {
   QVBoxLayout *layout = new QVBoxLayout(this);

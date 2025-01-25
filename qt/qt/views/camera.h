@@ -4,6 +4,8 @@
 #include <QOpenGLFunctions>
 #include <QThread>
 
+#include "msgq/cc/vision/vipc_client.h"
+
 const int FRAME_BUFFER_SIZE = 5;
 
 class CameraWidget : public QOpenGLWidget, protected QOpenGLFunctions {
