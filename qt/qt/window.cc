@@ -12,7 +12,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent) {
   layout->setContentsMargins(0,0,0,0);
   layout->setSpacing(0);
 
-  layout->addWidget(new CameraWidget("camerad"));
+  layout->addWidget(new CameraWidget("lived", VISION_SENSOR_MONO8));
 
   setLayout(layout);
 }
