@@ -20,8 +20,9 @@ function install_ubuntu_common() {
     qt6-base-dev \
     qt6-tools-dev \
     mesa-utils \
-    libgl1-mesa-dev \ 
-    python3-dev \
+    libzmq3-dev \
+    # libgl1-mesa-dev \ 
 }
 
 install_ubuntu_common
+
