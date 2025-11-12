@@ -9,6 +9,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+long custom_poll(struct pollfd *fds, unsigned long nfds, int timeout_ms);
+
 
 int main()
 {
@@ -36,7 +38,11 @@ int main()
   pfd.events  = POLLIN;
   pfd.revents = 0;
 
+#if CUSTOM
+  long n = custom_poll(&pfd, 1, -1);
+#else
   int n = poll(&pfd, 1, -1);
+#endif
   if (n < 0)                   { close(listen_fd); return 1; }
   if (!(pfd.revents & POLLIN)) { close(listen_fd); return 1; }
 
