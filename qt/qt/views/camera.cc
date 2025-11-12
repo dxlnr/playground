@@ -46,7 +46,6 @@ void CameraWidget::vThread()
       emit vipcThreadConnected(vclient.get());
     }
     if (VisionBuf *buf = vclient->recv(&meta_main, 1000)) {
-      printf("buf recv : %d", meta_main.frame_id);
       {
         std::lock_guard lk(flk);
         frames.push_back(std::make_pair(meta_main.frame_id, buf));
@@ -79,8 +78,6 @@ void CameraWidget::paintGL()
   prev_frame_id = frames[frame_idx].first;
   VisionBuf *frame = frames[frame_idx].second;
   assert(frame != nullptr);
-
-  printf("frmeee 10  : %d\n", frame->data[10]);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -133,7 +130,7 @@ void CameraWidget::availableStreamsUpdated(std::set<VisionType> streams)
 }
 void CameraWidget::vipcConnected(VisionIpcClient *vclient) 
 {
-  stream_width = vclient->buffers[0].width;
+  stream_width  = vclient->buffers[0].width;
   stream_height = vclient->buffers[0].height;
 }
 void CameraWidget::vipcFrameReceived() { update(); }
