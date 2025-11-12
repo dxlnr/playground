@@ -9,7 +9,11 @@
 #include <string.h>
 #include <stdlib.h>
 
-long custom_poll(struct pollfd *fds, unsigned long nfds, int timeout_ms);
+long custom_poll(struct pollfd *fds,
+                 nfds_t nfds,
+                 const struct timespec *tmo,
+                 const void *sigmask,
+                 size_t sigsetsize);
 
 
 int main()
@@ -39,7 +43,13 @@ int main()
   pfd.revents = 0;
 
 #if CUSTOM
-  long n = custom_poll(&pfd, 1, -1);
+  int timeout_ms = 5000;
+
+  struct timespec ts;
+  ts.tv_sec  = timeout_ms / 1000;
+  ts.tv_nsec = (timeout_ms % 1000) * 1000000L;
+
+  long n = custom_poll(&pfd, 1, &ts, NULL, 0);;
 #else
   int n = poll(&pfd, 1, -1);
 #endif
