@@ -1,0 +1,45 @@
+Import('mq_env', 'envCython', 'arch')
+
+if arch == 'win32':
+    ext, suffix = '', '.pyd'
+else:
+    ext, suffix = '.so', '.so'
+
+mq_objects = mq_env.SharedObject([
+    'qdmq/msgq.cc',
+    'qdmq/ipc.cc',
+    'qdmq/impl_msgq.cc',
+    'qdmq/impl_zmq.cc',
+])
+mq = mq_env.Library('mq', mq_objects)
+mq_cpp = envCython.CythonCPP('qdmq/pyx/ipcx.cpp', 'qdmq/pyx/ipcx.pyx')
+if arch == "darwin":
+    mq_py = envCython.Program(f'qdmq/ipcx{ext}', mq_cpp, LIBS=envCython["LIBS"]+[mq, "zmq"], SHLIBPREFIX='', SHLIBSUFFIX=f'{suffix}')
+else:
+    mq_py = envCython.SharedLibrary(f'qdmq/ipcx{ext}', mq_cpp, LIBS=envCython["LIBS"]+[mq, "zmq"], SHLIBPREFIX='', SHLIBSUFFIX=f'{suffix}')
+
+vision_objects = mq_env.SharedObject([
+    'qdmq/vision/vbuf.cc',
+    'qdmq/vision/vipc.cc',
+    'qdmq/vision/vipc_client.cc',
+    'qdmq/vision/vipc_server.cc'
+])
+mq_vision = mq_env.Library('visionipc', vision_objects)
+mq_vision_cpp = envCython.CythonCPP('qdmq/pyx/vipcx.cpp', 'qdmq/pyx/vipcx.pyx')
+if arch == "darwin":
+    mq_vision_py = envCython.Program(f'qdmq/vipcx{ext}', mq_vision_cpp, LIBS=envCython["LIBS"]+[mq_vision, mq, "zmq"], SHLIBPREFIX='', SHLIBSUFFIX=f'{suffix}')
+else:
+    mq_vision_py = envCython.SharedLibrary(f'qdmq/vipcx{ext}', mq_vision_cpp, LIBS=envCython["LIBS"]+[mq_vision, mq, "zmq"], SHLIBPREFIX='', SHLIBSUFFIX=f'{suffix}')
+
+shmm_objects = mq_env.SharedObject([
+    'qdmq/shmm/shmm.cc',
+    'qdmq/shmm/shmm_rw.cc'
+])
+shmm = mq_env.Library('shmm', shmm_objects)
+shmm_cpp = envCython.CythonCPP('qdmq/pyx/shmm_rwx.cpp', 'qdmq/pyx/shmm_rwx.pyx')
+if arch == "darwin":
+    shmm_py = envCython.Program(f'qdmq/shmm_rwx{ext}', shmm_cpp, LIBS=envCython["LIBS"]+[shmm], SHLIBPREFIX='', SHLIBSUFFIX=f'{suffix}')
+else:
+    shmm_py = envCython.SharedLibrary(f'qdmq/shmm_rwx{ext}', shmm_cpp, LIBS=envCython["LIBS"]+[shmm], SHLIBPREFIX='', SHLIBSUFFIX=f'{suffix}')
+
+Export('mq', 'mq_py', 'mq_vision', 'mq_vision_py', 'shmm', 'shmm_py')

@@ -1,0 +1,11 @@
+void test_shmm_new_buf_ok(void);
+void test_shmm_new_buf_once_only(void);
+void test_shmm_set_buf_shape(void);
+void test_shmm_open_buf_no_buf_created(void);
+void test_shmm_open_buf(void);
+void test_shmm_add_buf_u16_to_u32(void);
+void test_shmm_add_buf_u16_to_u32_5d(void);
+void test_shmm_get_dst_ptr_f32(void);
+void test_shmm_block_until_done_immediate(void);
+void test_shmm_block_until_done(void);
+void test_poll_buf_created(void);

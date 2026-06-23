@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<typesystem package="qt_cam_w">
+  <load-typesystem name="typesystem_widgets.xml" generate="no"/>
+  <object-type name="CameraView">
+    <include file-name="views/camera_view.h" location="global"/>
+  </object-type>
+</typesystem>

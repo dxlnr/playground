@@ -1,0 +1,5 @@
+Import('mq_env', 'envCython', 'arch', 'mq', 'mq_vision', 'shmm')
+
+if GetOption('extras'):
+    mq_env.Program('test_runner', ['test_runner.cc', 'test_msgq.cc', 'test_vision.cc', 'test_shmm.cc', 'test_shmm_rw.cc'], LIBS=[mq, mq_vision, shmm, 'zmq'])
+    mq_env.Program('writer_t', ['writer_t.cc'], LIBS=[mq, mq_vision, shmm, 'zmq'])

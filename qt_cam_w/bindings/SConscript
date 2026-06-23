@@ -1,0 +1,117 @@
+import glob
+import os
+import shlex
+import shutil
+import sys
+import sysconfig
+
+import PySide6
+import shiboken6
+import shiboken6_generator
+
+Import('qt_env')
+
+try:
+    Import('widgets')
+    widget_libs = [widgets]
+except Exception:
+    widget_src = ["views/camera.cc", "views/camera_view.cc"]
+    widget_libs = [qt_env.Library("qt_cam_w_widgets", widget_src, LIBS=qt_env["LIBS"])]
+
+pyside_dir = os.path.dirname(PySide6.__file__)
+shiboken_dir = os.path.dirname(shiboken6.__file__)
+shiboken_generator_dir = os.path.dirname(shiboken6_generator.__file__)
+pyside_typesystems = os.path.join(pyside_dir, "typesystems")
+
+python_include = sysconfig.get_path('include')
+python_lib = sysconfig.get_config_var('LIBDIR')
+ext_suffix = sysconfig.get_config_var('EXT_SUFFIX') or '.so'
+
+generated_dir = Dir('#bindings/generated')
+module_dir = Dir('#bindings/generated/qt_cam_w')
+typesystem_file = File('#bindings/typesystem_qt_cam_w.xml')
+
+wrapper_cpp = [
+    File(os.path.join(module_dir.abspath, 'qt_cam_w_module_wrapper.cpp')),
+    File(os.path.join(module_dir.abspath, 'cameraview_wrapper.cpp')),
+]
+
+include_paths = [
+    Dir('#').abspath,
+    Dir('#bindings').abspath,
+    python_include,
+    os.path.join(pyside_dir, 'include'),
+    os.path.join(pyside_dir, 'include', 'QtCore'),
+    os.path.join(pyside_dir, 'include', 'QtGui'),
+    os.path.join(pyside_dir, 'include', 'QtWidgets'),
+    os.path.join(shiboken_dir, 'include'),
+    os.path.join(shiboken_generator_dir, 'include'),
+]
+include_paths.extend(str(path) for path in qt_env['CPPPATH'])
+
+typesystem_paths = [
+    Dir('#bindings').abspath,
+    pyside_typesystems,
+]
+
+include_arg = os.pathsep.join(include_paths)
+typesystem_arg = os.pathsep.join(typesystem_paths)
+system_include_paths = [
+    '/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13',
+    '/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/x86_64-linux-gnu/c++/13',
+    '/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/backward',
+    '/usr/lib/llvm-18/lib/clang/18/include',
+    '/usr/local/include',
+    '/usr/include/x86_64-linux-gnu',
+    '/usr/include',
+]
+system_include_arg = os.pathsep.join(system_include_paths)
+
+cxx_path = shutil.which(qt_env.get('CXX', 'clang++'))
+
+shiboken_exe = os.path.join(os.path.dirname(sys.executable), 'shiboken6')
+if not os.path.exists(shiboken_exe):
+    shiboken_exe = shutil.which('shiboken6') or '/home/illnerd/miniconda3/envs/pyqt/bin/shiboken6'
+
+shiboken_cmd = [
+    shiboken_exe,
+    '--generator-set=shiboken',
+    '--enable-parent-ctor-heuristic',
+    '--enable-pyside-extensions',
+    '--enable-return-value-heuristic',
+    '--avoid-protected-hack',
+    f'--include-paths={include_arg}',
+    f'--system-include-paths={system_include_arg}',
+    f'--compiler-path={cxx_path or qt_env.get("CXX", "clang++")}',
+    f'--typesystem-paths={typesystem_arg}',
+    f'--output-directory={generated_dir.abspath}',
+    File('#views/camera_view.h').abspath,
+    typesystem_file.abspath,
+]
+
+shiboken_action = ' '.join(shlex.quote(arg) for arg in shiboken_cmd)
+qt_env.Command(wrapper_cpp, typesystem_file, shiboken_action)
+qt_env.Depends(
+    wrapper_cpp,
+    [File('#bindings/qt_cam_w_global.h'), File('#views/camera_view.h')],
+)
+
+bind_env = qt_env.Clone()
+bind_env['CPPPATH'] += include_paths
+bind_env['LIBPATH'] += [path for path in [python_lib, pyside_dir, shiboken_dir] if path]
+bind_env['SHLIBPREFIX'] = ''
+bind_env['SHLIBSUFFIX'] = ext_suffix
+
+pyside_libs = sorted(glob.glob(os.path.join(pyside_dir, 'libpyside6*.so*')))
+shiboken_libs = sorted(glob.glob(os.path.join(shiboken_dir, 'libshiboken6*.so*')))
+pyside_lib = File(pyside_libs[0]) if pyside_libs else 'pyside6'
+shiboken_lib = File(shiboken_libs[0]) if shiboken_libs else 'shiboken6'
+
+bind_libs = widget_libs + [
+    File('#qdmq/libvisionipc.a'),
+    File('#qdmq/libmq.a'),
+    'zmq',
+    pyside_lib,
+    shiboken_lib,
+] + qt_env['LIBS']
+bind_env.SharedLibrary('qt_cam_w', wrapper_cpp, LIBS=bind_libs)

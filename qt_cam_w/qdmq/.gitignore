@@ -1,0 +1,16 @@
+# PYTHON
+__pycache__
+# C/C++
+*.os
+*.so
+*.o
+*.a
+# SCONS
+.sconsign.dblite
+# CYTHON CREATED
+qdmq/pyx/*.cpp
+# RUFF
+.ruff_cache
+# TESTS
+tests/test_runner
+tests/writer_t

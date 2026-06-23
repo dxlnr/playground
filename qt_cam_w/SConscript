@@ -1,0 +1,18 @@
+# Import('qt_env', 'vision', 'msgq')
+Import('qt_env')
+
+# base_libs = [vision, msgq, 'zmq'] + qt_env["LIBS"]
+base_libs = [
+    File('#qdmq/libvisionipc.a'),
+    File('#qdmq/libmq.a'),
+    'zmq',
+] + qt_env["LIBS"]
+
+widgets_src = ["views/camera.cc", "views/camera_view.cc"]
+widgets = qt_env.Library("qt_widgets", widgets_src, LIBS=base_libs)
+qt_libs = [widgets] + base_libs
+
+Export('widgets')
+
+qt_src = ["main.cc", "window.cc"]
+qt_env.Program("ui", qt_src, LIBS=qt_libs)

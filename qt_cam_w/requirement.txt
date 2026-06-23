@@ -1,0 +1,5 @@
+Cython
+numpy
+scons
+PySide6
+PyOpenGL

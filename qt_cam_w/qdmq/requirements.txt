@@ -1,0 +1,5 @@
+scons
+Cython>=3.0.10
+numpy
+setuptools
+wheel

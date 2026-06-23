@@ -1,0 +1,114 @@
+import os
+import sys
+import sysconfig
+import numpy as np
+from SCons.Script import Action, Builder
+# ARCHITECTURE
+arch = sys.platform
+# OPTIONS
+SetOption('no_progress', True)
+AddOption('--minimal',
+          action='store_false',
+          dest='extras',
+          default=True,
+          help='the minimum build: no tests.')
+# PROJECT PATH
+project_root = Dir('#').abspath
+#
+cpppath = [
+    project_root,
+    sysconfig.get_paths()['include'],
+]
+mq_cc_path = [os.path.join(project_root, "qdmq"), os.path.join(project_root, "qdmq", "shmm"), os.path.join(project_root, "qdmq", "vision")]
+# PLATFORMS
+if arch == "win32":
+    lib_path = os.path.join(sys.prefix, "libs")
+    libs = [f"python{sysconfig.get_config_var('VERSION')}"]
+    # COMPILER
+    # cc_compiler = "cl"
+    # cxx_compiler = "cl"
+    cc_compiler = "clang"
+    cxx_compiler = "clang++"
+    # CYTHON
+    # cython_cc_flags = ["/Wno-shadow"]
+    # cython_linkflags = ["/DLL"]
+    cython_cc_flags = ["-Wno-shadow"]
+    cython_linkflags = ["-DLL"]
+    # mq
+    # msgq_cc_flags = ["/fPIC", "/O2", "/Wunused", "/Werror", "/Wshadow", "/Wno-vla-extension"]
+    mq_cc_flags = ["-std=c++20", "-fPIC", "-O2", "-Wunused", "-Werror", "-Wshadow", "-Wno-vla-extension"]
+elif arch == "darwin":
+    cc_path = '/opt/homebrew/include'
+    lib_path = '/opt/homebrew/lib'
+    libs = []
+    # COMPILER
+    cc_compiler = "clang"
+    cxx_compiler = "clang++"
+    # CYTHON
+    cython_cc_flags = ["-Wno-#warnings", "-Wno-shadow"]
+    cython_linkflags = [
+        "-bundle",
+        "-undefined",
+        "dynamic_lookup",
+    ]
+    # mq
+    mq_cc_flags = ["-std=c++20", "-fPIC", "-O2", "-Wunused", "-Werror", "-Wshadow", "-Wno-vla-extension"]
+else:
+    cpppath += ['/usr/lib/include']
+    lib_path = []
+    libs = []
+    # COMPILER
+    cc_compiler = "clang"
+    cxx_compiler = "clang++"
+    # CYTHON
+    cython_cc_flags = ["-Wno-#warnings", "-Wno-shadow"]
+    cython_linkflags = ["-pthread", "-shared"]
+    # mq
+    mq_cc_flags = ["-std=c++20", "-fPIC", "-O2", "-Wunused", "-Werror", "-Wshadow", "-Wno-vla-extension"]
+# MAIN BUILD
+mq_env = Environment(
+  ENV=os.environ,
+  CC=cc_compiler,
+  CXX=cxx_compiler,
+  CCFLAGS=mq_cc_flags,
+  LDFLAGS=[],
+  LINKFLAGS=[],
+  LIBS=libs,
+  CPPPATH=cpppath + mq_cc_path,
+  LIBPATH=lib_path,
+  CYTHONCFILESUFFIX=".cpp",
+  tools=["default", "cython"]
+)
+# CLEAN OUTPUT
+mq_env.Replace(
+  CCCOMSTR        ="  CC        $TARGET.file",
+  CXXCOMSTR       ="  CC        $TARGET.file",
+  LINKCOMSTR      ="  CCLD      $TARGET.file",
+  SHCCCOMSTR      ="  CC        $TARGET.file",
+  SHCXXCOMSTR     ="  CC        $TARGET.file",
+  ARCOMSTR        ="  AR        $TARGET.file",
+  RANLIBCOMSTR    ="  RANLIB    $TARGET.file",
+  SHLINKCOMSTR    ="  CCLD      $TARGET.file",
+  SHLIBLINKCOMSTR ="  CCLD      $TARGET.file",
+)
+# CYTHON
+envCython = mq_env.Clone()
+envCython["CPPPATH"] += [np.get_include()]
+envCython["CCFLAGS"] += cython_cc_flags
+envCython["LINKFLAGS"] = cython_linkflags
+# (for clean build only)
+envCython['CYTHON'] = envCython.get('CYTHON', 'cython')
+envCython['CYTHONFLAGS'] = envCython.get('CYTHONFLAGS', []) + ['-3', '-q']
+cython_cpp = Builder(
+  action=Action(
+    "$CYTHON $CYTHONFLAGS $SOURCE",
+    "  CYTHON    $SOURCE.file"
+  ),
+  suffix='.cpp',
+  src_suffix='.pyx',
+)
+envCython.Append(BUILDERS={'CythonCPP': cython_cpp})
+#
+Export('mq_env', 'envCython', 'arch')
+# BUILD
+SConscript(["SConscript", "tests/SConscript"])

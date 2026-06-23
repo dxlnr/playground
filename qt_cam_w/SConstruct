@@ -1,0 +1,111 @@
+import os
+import subprocess
+import platform
+import sysconfig
+import numpy as np
+
+arch = platform.system()
+
+# ENVIRONMENT
+env = Environment(
+  ENV={"PATH": os.environ["PATH"]},
+  CC='clang',
+  CXX='clang++',
+  tools=["default", "cython"],
+  CXXFLAGS=['-std=c++17'],
+  CPPPATH=[],
+)
+env["CCFLAGS"] = ["-g", "-fPIC", "-O2", "-Wunused", "-Werror", "-Wshadow"]
+
+# COMMUNICATION
+cpppath = [
+    Dir('.').abspath,
+    "#qdmq/qdmq",
+    "#qdmq/qdmq/vision",
+    '/usr/include/',
+    '/usr/lib/include',
+]
+ccflags = []
+ldflags = []
+
+msgq_env = env.Clone()
+msgq_env["CCFLAGS"] = ["-g", "-fPIC", "-O2", "-Wunused", "-Werror", "-Wshadow", "-Wno-vla-extension"] + ccflags
+msgq_env["LDFLAGS"] = ldflags
+msgq_env["LINKFLAGS"] = ldflags
+msgq_env["CFLAGS"] = "-std=gnu11"
+msgq_env["CXXFLAGS"] = "-std=c++1z"
+msgq_env["CPPPATH"] = cpppath
+msgq_env["CYTHONCFILESUFFIX"] = ".cpp"
+
+# CYTHON
+python_include = sysconfig.get_path('include')
+python_lib = sysconfig.get_config_var('LIBDIR')
+python_version = sysconfig.get_config_var('VERSION')  # E.g., '3.12'
+
+envCython = msgq_env.Clone(LIBS=[])
+envCython["CPPPATH"] += [
+    python_include,
+    np.get_include(),
+]
+envCython["CCFLAGS"] += ["-Wno-#warnings", "-Wno-shadow", "-Wno-deprecated-declarations"]
+envCython["CCFLAGS"].remove('-Werror')
+envCython["LINKFLAGS"] = ["-pthread", "-shared"]
+
+# QT
+QT_VERSION = 6
+qt_prefix_hint = os.environ.get('QT_PREFIX', os.environ.get('CONDA_PREFIX', '/home/illnerd/miniconda3/envs/pyqt'))
+qt_qmake_candidates = [
+    os.path.join(qt_prefix_hint, 'bin', f'qmake{QT_VERSION}'),
+    os.path.join(qt_prefix_hint, 'bin', 'qmake'),
+    f'qmake{QT_VERSION}',
+]
+
+def get_qt_path(query):
+    qmake = next((path for path in qt_qmake_candidates if os.path.exists(path)), None)
+    if qmake is None:
+        raise RuntimeError(f"Qt qmake not found. Install Qt{QT_VERSION} or set QT_PREFIX to a Qt{QT_VERSION} install.")
+    return subprocess.check_output([qmake, '-query', f'{query}'], encoding='utf8').strip()
+
+qt_prefix = get_qt_path('QT_INSTALL_PREFIX')
+qt_bin_path = os.path.join(qt_prefix, 'bin')
+qt_env = Environment(
+    ENV={"PATH": f"{qt_bin_path}{os.pathsep}{os.environ['PATH']}"},
+    CXXFLAGS=['-std=c++17'],
+    CC='clang',
+    CXX='clang++',
+    LINKFLAGS=[],
+    CFLAGS=[],
+    LIBPATH=[],
+    QT6DIR=qt_prefix,
+    QTDIR=qt_prefix,
+)
+
+qt_env['CCFLAGS'] = ['-fPIC']
+
+qt_env["CPPPATH"] = cpppath
+
+qt_modules = ["Widgets", "Gui", "Core", "OpenGL", "OpenGLWidgets"]
+qt_libs = [f"Qt{QT_VERSION}{m}" for m in qt_modules]
+qt_libs += ["GL"]
+
+qt_install_headers = get_qt_path('QT_INSTALL_HEADERS')
+qt_libexec_path = get_qt_path('QT_INSTALL_LIBEXECS')
+
+qt_gui_path = os.path.join(qt_install_headers, "QtGui")
+qt_gui_dirs = [d for d in os.listdir(qt_gui_path) if os.path.isdir(os.path.join(qt_gui_path, d))]
+qt_dirs = [f"{qt_install_headers}"]
+qt_dirs += [f"{qt_install_headers}/QtGui/{qt_gui_dirs[0]}/QtGui", ] if qt_gui_dirs else []
+qt_dirs += [f"{qt_install_headers}/Qt{m}" for m in qt_modules]
+
+qt_env.Tool('qt6')
+qt_env['CPPPATH'] += qt_dirs
+qt_env['LIBS'] = qt_libs
+qt_env['LIBPATH'] = [os.path.join(qt_prefix, 'lib')]
+qt_moc_path = os.path.join(qt_libexec_path, 'moc')
+if os.path.exists(qt_moc_path):
+    qt_env['QT_MOC'] = qt_moc_path
+    qt_env['QT6_MOC'] = qt_moc_path
+
+Export('qt_env', 'msgq_env', 'envCython')
+# run
+SConscript(['SConscript', 'bindings/SConscript'])
